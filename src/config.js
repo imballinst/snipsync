@@ -1,12 +1,13 @@
 const { join } = require('path');
-const { sync } = require('node-read-yaml');
+const { readFileSync } = require('fs');
+const { load } = require('js-yaml');
 const { cfgFile, rootDir, fmtProgressBar } = require('./common');
 
 module.exports.readConfig = (logger, file="") => {
   // allow user to specify a configuration file path other than the default.
   const cfgPath = file === "" ? join(rootDir, cfgFile) : file;
   logger.info(`loading configuration from ${cfgPath}`);
-  const cfg = sync(cfgPath);
+  const cfg = load(readFileSync(cfgPath, 'utf-8'));
 
   // add features section if not specified
   if (!Object.prototype.hasOwnProperty.call(cfg, 'features')) {
