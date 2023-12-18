@@ -1,5 +1,5 @@
 {
-  "name": "snipsync",
+  "name": "@imballinstack/snipsync",
   "version": "1.8.0",
   "description": "Sync docs with github repo code snippets",
   "main": "index.js",
