@@ -369,10 +369,10 @@ class Sync {
     let lookForStop = false;
     let spliceStart = 0;
     let config;
+    let inlineConfig;
 
     for (let [idx, _] of staticFile.lines.entries()) {
       const line = file.lines[idx];
-      let inlineConfig;
 
       if (line.includes(writeStart)) {
         const extracted = extractWriteIDAndConfig(line);
@@ -563,6 +563,7 @@ function modifyWithInlineConfig(textLine, inlineConfig) {
   let result = textLine;
 
   if (inlineConfig?.numberOfLeadingSpaces) {
+    const num = inlineConfig?.numberOfLeadingSpaces;
     let whitespaces = "";
 
     for (let i = 0; i < num; i++) {
