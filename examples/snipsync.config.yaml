@@ -1,6 +1,6 @@
 origins:
   - files:
-      - origins
+      - origins/**/*.js
 
 targets:
   - targets
