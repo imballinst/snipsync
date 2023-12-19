@@ -41,7 +41,7 @@ class Snippet {
     this.lines = [];
   }
   // fmt creates an array of file lines from the Snippet variables
-  fmt(config) {
+  fmt(config, inlineConfig) {
     const lines = [];
     if (config.enable_source_link) {
       lines.push(this.fmtSourceLink());
@@ -51,16 +51,22 @@ class Snippet {
       if (config.highlights !== undefined) {
         textline = `${textline} {${config.highlights}}`;
       }
-      lines.push(textline);
+      lines.push(modifyWithInlineConfig(textline, inlineConfig));
     }
     if (config.select !== undefined) {
       const selectedLines = selectLines(config.select, this.lines);
-      lines.push(...selectedLines);
+      lines.push(
+        ...selectedLines.map((line) =>
+          modifyWithInlineConfig(line, inlineConfig)
+        )
+      );
     } else {
-      lines.push(...this.lines);
+      lines.push(
+        ...this.lines.map((line) => modifyWithInlineConfig(line, inlineConfig))
+      );
     }
     if (config.enable_code_block) {
-      lines.push(markdownCodeTicks);
+      lines.push(modifyWithInlineConfig(markdownCodeTicks, inlineConfig));
     }
     return lines;
   }
@@ -363,14 +369,27 @@ class Sync {
     let lookForStop = false;
     let spliceStart = 0;
     let config;
+
     for (let [idx, _] of staticFile.lines.entries()) {
       const line = file.lines[idx];
+      let inlineConfig;
+
       if (line.includes(writeStart)) {
         const extracted = extractWriteIDAndConfig(line);
         if (extracted.id === snippet.id) {
           config = overwriteConfig(this.config.features, extracted.config);
           spliceStart = fileLineNumber;
           lookForStop = true;
+        }
+
+        const rawJSON = line.slice(line.indexOf("{"), line.indexOf("}") + 1);
+        try {
+          const parsed = JSON.parse(rawJSON);
+          if (parsed) {
+            inlineConfig = parsed;
+          }
+        } catch (_) {
+          // No-op.
         }
       }
       if (line.includes(writeEnd) && lookForStop) {
@@ -379,7 +398,8 @@ class Sync {
           fileLineNumber,
           snippet,
           dynamicFile,
-          config
+          config,
+          inlineConfig
         );
         lookForStop = false;
       }
@@ -388,9 +408,9 @@ class Sync {
     return dynamicFile;
   }
   // spliceFile merges an individual snippet into the file
-  async spliceFile(start, end, snippet, file, config) {
+  async spliceFile(start, end, snippet, file, config, inlineConfig) {
     const rmlines = end - start;
-    file.lines.splice(start, rmlines - 1, ...snippet.fmt(config));
+    file.lines.splice(start, rmlines - 1, ...snippet.fmt(config, inlineConfig));
     return file;
   }
   // clearSnippets loops through target files to remove snippets
@@ -537,3 +557,20 @@ function selectLines(selectNumbers, lines, fileExtension) {
 }
 
 module.exports = { Sync };
+
+// Helper functions.
+function modifyWithInlineConfig(textLine, inlineConfig) {
+  let result = textLine;
+
+  if (inlineConfig?.numberOfLeadingSpaces) {
+    let whitespaces = "";
+
+    for (let i = 0; i < num; i++) {
+      whitespaces += " ";
+    }
+
+    result = `${whitespaces}${result}`;
+  }
+
+  return result;
+}

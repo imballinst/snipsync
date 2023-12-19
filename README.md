@@ -2,6 +2,8 @@
 
 Snipsync makes sure your documented code snippets are always in sync with your Github repo source files.
 
+**NOTE:** this is a fork of the original https://github.com/temporalio/snipsync.
+
 ## Prerequisites
 
 This tool requires [Node](https://nodejs.org/) v15.0.0 or above (recommended 15.2.1) and [Yarn](https://yarnpkg.com/).
@@ -32,9 +34,9 @@ If the `enable_source_link` key in `features` is not specified, then it will def
 If the `enable_code_block` key in `features` is not specified, then it will default to `true`.
 
 The `allowed_target_extensions` key in `features` lets you set a list of extensions to scan. Specify extensions like `[.md,.txt]`.
-If the `allowed_target_extensions` key in `features` is not specified, then it defaults to an empty array (`[]`) and all files are scanned. 
+If the `allowed_target_extensions` key in `features` is not specified, then it defaults to an empty array (`[]`) and all files are scanned.
 
-The `enable_code_dedenting` key in `features` lets you remove leading spaces from indented code snippets. This is handy when you're including a snippet of code within a class or function and don't want to include the leading indentation. This is `false` by default. 
+The `enable_code_dedenting` key in `features` lets you remove leading spaces from indented code snippets. This is handy when you're including a snippet of code within a class or function and don't want to include the leading indentation. This is `false` by default.
 
 Example of a complete `snipsync.config.yaml`:
 
@@ -46,7 +48,7 @@ origins:
   - owner: temporalio
     repo: java-samples
   - files:
-    - ./src/**/*.ts
+      - ./src/**/*.ts
 
 targets:
   - docs
