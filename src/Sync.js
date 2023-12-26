@@ -1,3 +1,4 @@
+// @ts-check
 const { join, basename, dirname } = require("path");
 const { Octokit } = require("@octokit/rest");
 const { promisify } = require("util");
@@ -6,7 +7,6 @@ const {
   fmtStartCodeBlock,
   markdownCodeTicks,
   extractionDir,
-  fmtProgressBar,
   readStart,
   readEnd,
   rootDir,
@@ -41,7 +41,7 @@ class Snippet {
     this.lines = [];
   }
   // fmt creates an array of file lines from the Snippet variables
-  fmt(config, inlineConfig) {
+  fmt(config) {
     const lines = [];
     if (config.enable_source_link) {
       lines.push(this.fmtSourceLink());
@@ -51,22 +51,20 @@ class Snippet {
       if (config.highlights !== undefined) {
         textline = `${textline} {${config.highlights}}`;
       }
-      lines.push(modifyWithInlineConfig(textline, inlineConfig));
+      lines.push(modifyWithInlineConfig(textline, config));
     }
     if (config.select !== undefined) {
-      const selectedLines = selectLines(config.select, this.lines);
+      const selectedLines = selectLines(config, this.lines);
       lines.push(
-        ...selectedLines.map((line) =>
-          modifyWithInlineConfig(line, inlineConfig)
-        )
+        ...selectedLines.map((line) => modifyWithInlineConfig(line, config))
       );
     } else {
       lines.push(
-        ...this.lines.map((line) => modifyWithInlineConfig(line, inlineConfig))
+        ...this.lines.map((line) => modifyWithInlineConfig(line, config))
       );
     }
     if (config.enable_code_block) {
-      lines.push(modifyWithInlineConfig(markdownCodeTicks, inlineConfig));
+      lines.push(modifyWithInlineConfig(markdownCodeTicks, config));
     }
     return lines;
   }
@@ -147,9 +145,11 @@ class ProgressBar {
   }
   // start sets the initial text display
   start(operation) {
-    this.bar.start(this.totalValue, this.startValue, {
-      operation: `${operation}`,
-    });
+    if (!process.env.DEBUG) {
+      this.bar.start(this.totalValue, this.startValue, {
+        operation: `${operation}`,
+      });
+    }
   }
   // adds to the total chunks
   updateTotal(valueAdd) {
@@ -255,6 +255,7 @@ class Sync {
   async unzip(filename) {
     const zipPath = join(rootDir, filename);
     const unzipPath = join(rootDir, extractionDir);
+    // @ts-ignore
     const { files } = await anzip(zipPath, { outputPath: unzipPath });
     await unlinkAsync(zipPath);
     return files;
@@ -285,6 +286,7 @@ class Sync {
           let capture = false;
           let fileSnipsCount = 0;
           const fileSnips = [];
+          // @ts-ignore
           await eachLineAsync(itemPath, (line) => {
             if (line.includes(readEnd)) {
               capture = false;
@@ -343,6 +345,7 @@ class Sync {
   // readLines reads each line of the file
   async readLines(targetFile) {
     const fileLines = [];
+    // @ts-ignore
     await eachLineAsync(targetFile.fullpath, (line) => {
       fileLines.push(line);
     });
@@ -369,7 +372,6 @@ class Sync {
     let lookForStop = false;
     let spliceStart = 0;
     let config;
-    let inlineConfig;
 
     for (let [idx, _] of staticFile.lines.entries()) {
       const line = file.lines[idx];
@@ -381,16 +383,6 @@ class Sync {
           spliceStart = fileLineNumber;
           lookForStop = true;
         }
-
-        const rawJSON = line.slice(line.indexOf("{"), line.indexOf("}") + 1);
-        try {
-          const parsed = JSON.parse(rawJSON);
-          if (parsed) {
-            inlineConfig = parsed;
-          }
-        } catch (_) {
-          // No-op.
-        }
       }
       if (line.includes(writeEnd) && lookForStop) {
         dynamicFile = await this.spliceFile(
@@ -398,8 +390,7 @@ class Sync {
           fileLineNumber,
           snippet,
           dynamicFile,
-          config,
-          inlineConfig
+          config
         );
         lookForStop = false;
       }
@@ -408,9 +399,9 @@ class Sync {
     return dynamicFile;
   }
   // spliceFile merges an individual snippet into the file
-  async spliceFile(start, end, snippet, file, config, inlineConfig) {
+  async spliceFile(start, end, snippet, file, config) {
     const rmlines = end - start;
-    file.lines.splice(start, rmlines - 1, ...snippet.fmt(config, inlineConfig));
+    file.lines.splice(start, rmlines - 1, ...snippet.fmt(config));
     return file;
   }
   // clearSnippets loops through target files to remove snippets
@@ -459,6 +450,7 @@ class Sync {
     this.progress.updateOperation("cleaning up");
     this.progress.updateTotal(1);
     const filePath = join(rootDir, extractionDir);
+    // @ts-ignore
     rimrafAsync(filePath);
     this.progress.increment();
     return;
@@ -522,10 +514,20 @@ function overwriteConfig(current, extracted) {
     config.select = extracted.selectedLines;
   }
 
+  if (extracted?.numberOfLeadingSpaces) {
+    config.numberOfLeadingSpaces = extracted.numberOfLeadingSpaces;
+  }
+
+  if (extracted?.ellipsisCommentReplacement !== undefined) {
+    config.ellipsisCommentReplacement = extracted.ellipsisCommentReplacement;
+  }
+
   return config;
 }
 
-function selectLines(selectNumbers, lines, fileExtension) {
+function selectLines(config, lines, fileExtension) {
+  const { select: selectNumbers } = config;
+
   let newLines = [];
   const commentList = {
     py: "# ...",
@@ -536,7 +538,12 @@ function selectLines(selectNumbers, lines, fileExtension) {
     xml: "<!-- ...  -->",
     bash: "# ...",
   };
-  const ellipsisComment = commentList[fileExtension] || "// ...";
+  let ellipsisComment = commentList[fileExtension] || "// ...";
+
+  if (config.ellipsisCommentReplacement !== undefined) {
+    ellipsisComment = config.ellipsisCommentReplacement;
+  }
+
   for (const sn of selectNumbers) {
     let skip = false;
     let nums = [];
@@ -559,11 +566,11 @@ function selectLines(selectNumbers, lines, fileExtension) {
 module.exports = { Sync };
 
 // Helper functions.
-function modifyWithInlineConfig(textLine, inlineConfig) {
+function modifyWithInlineConfig(textLine, config) {
   let result = textLine;
 
-  if (inlineConfig?.numberOfLeadingSpaces) {
-    const num = inlineConfig?.numberOfLeadingSpaces;
+  if (config?.numberOfLeadingSpaces) {
+    const num = config?.numberOfLeadingSpaces;
     let whitespaces = "";
 
     for (let i = 0; i < num; i++) {

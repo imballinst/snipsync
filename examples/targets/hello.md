@@ -23,3 +23,29 @@ console.log("xdd");
     console.log("xdd");
     ```
 <!--SNIPEND-->
+
+## Test selective numbers
+
+<!--SNIPSTART hehe {"selectedLines": ["1", "3-5", "8"]}-->
+```js
+function testSelectLines() {
+// ...
+  console.info("2");
+  console.info("3");
+  console.info("4");
+// ...
+}
+```
+<!--SNIPEND-->
+
+<!--SNIPSTART hehe {"selectedLines": ["1", "3-5", "8"],"ellipsisCommentReplacement":""}-->
+```js
+function testSelectLines() {
+
+  console.info("2");
+  console.info("3");
+  console.info("4");
+
+}
+```
+<!--SNIPEND-->
