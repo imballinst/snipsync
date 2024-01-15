@@ -6,6 +6,7 @@ module.exports = {
   fmtStartCodeBlock: (ext) => '```' + ext,
   readStart: '@@@SNIPSTART',
   readEnd: '@@@SNIPEND',
+  readMultiSnip: '@@@MULTISNIP',
   writeStart: '<!--SNIPSTART',
   writeStartClose: '-->',
   writeEnd: '<!--SNIPEND',

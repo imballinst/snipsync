@@ -35,5 +35,10 @@ module.exports.readConfig = (logger, file="") => {
     cfg['features']['enable_code_dedenting'] = false;
   }
 
+  // Disable code block dedenting by default if not specified
+  if (!Object.prototype.hasOwnProperty.call(cfg.features, 'enable_multi_snippet')) {
+    cfg['features']['enable_multi_snippet'] = false;
+  }
+
   return cfg;
 };

@@ -13,6 +13,7 @@ const {
   writeStart,
   writeStartClose,
   writeEnd,
+  readMultiSnip,
 } = require("./common");
 const { writeFile, unlink } = require("fs");
 const dedent = require("dedent");
@@ -39,6 +40,7 @@ class Snippet {
     this.ref = ref;
     this.filePath = filePath;
     this.lines = [];
+    this.config = {};
   }
   // fmt creates an array of file lines from the Snippet variables
   fmt(config) {
@@ -286,6 +288,7 @@ class Sync {
           let capture = false;
           let fileSnipsCount = 0;
           const fileSnips = [];
+          const multiSnips = [];
           // @ts-ignore
           await eachLineAsync(itemPath, (line) => {
             if (line.includes(readEnd)) {
@@ -293,6 +296,15 @@ class Sync {
               fileSnipsCount++;
             }
             if (capture) {
+              // check if multisnippet exist
+              if (this.config.features.enable_multi_snippet) {
+                if (line.includes(readMultiSnip)) {
+                  let extracted = extractReadMultirefIDAndSetting(line)
+                  extracted.parentIndex = fileSnipsCount
+                  multiSnips.push(extracted)
+                  return Promise.resolve();
+                }
+              }
               fileSnips[fileSnipsCount].lines.push(line);
             }
             if (line.includes(readStart)) {
@@ -302,11 +314,22 @@ class Sync {
               fileSnips.push(snip);
             }
           });
+
+          // copy parent snippet and assign config from child (multisnippet)
+          if (this.config.features.enable_multi_snippet) {
+            multiSnips.forEach(element => {
+              const multiSnip = Object.assign(new Snippet, fileSnips[element.parentIndex]);
+              multiSnip.config = element.config;
+              multiSnip.id = `${multiSnip.id}-${element.id}`;
+              fileSnips.push(multiSnip);
+            });
+          }
           snippets.push(...fileSnips);
           this.progress.increment();
         }
       })
     );
+    this.progress.increment();
     return snippets;
   }
   // getTargetFilesInfos identifies the paths to the target write files
@@ -380,6 +403,11 @@ class Sync {
         const extracted = extractWriteIDAndConfig(line);
         if (extracted.id === snippet.id) {
           config = overwriteConfig(this.config.features, extracted.config);
+          // check snippet config
+          if (!isEmpty(snippet.config)) {
+            const snippetConfig = overwriteConfig(this.config.features, snippet.config);
+            config = {...config, ...snippetConfig}
+          }
           spliceStart = fileLineNumber;
           lookForStop = true;
         }
@@ -471,6 +499,11 @@ const readMatchRegexp = new RegExp(
   escapeStringRegexp(readStart) + /\s+(\S+)/.source
 );
 
+const readMultiSnippetMatchRegexp = new RegExp(
+  escapeStringRegexp(readMultiSnip) + /\s+(\S+)(.*)/.source
+);
+
+
 const writeMatchRegexp = new RegExp(
   escapeStringRegexp(writeStart) +
     /\s+(\S+)(?:\s+(.+))?\s*/.source +
@@ -481,6 +514,21 @@ const writeMatchRegexp = new RegExp(
 function extractReadID(line) {
   const matches = line.match(readMatchRegexp);
   return matches[1];
+}
+
+// extractReadID uses regex to exract the id from a string
+function extractReadMultirefID(line) {
+  const matches = line.match(readMultiSnippetMatchRegexp);
+  return matches[1];
+}
+
+// extractReadID uses regex to exract the id from a string
+function extractReadMultirefIDAndSetting(line) {
+  const matches = line.match(readMultiSnippetMatchRegexp);
+  return {
+    id: matches[1],
+    config: matches[2] ? JSON.parse(matches[2].trim()) : undefined,
+  };
 }
 
 // extractWriteIDAndConfig uses regex to exract the id from a string
@@ -521,6 +569,11 @@ function overwriteConfig(current, extracted) {
   if (extracted?.ellipsisCommentReplacement !== undefined) {
     config.ellipsisCommentReplacement = extracted.ellipsisCommentReplacement;
   }
+
+  config.enable_multi_snippet =
+  extracted?.enable_multi_snippet ?? true
+    ? current.enable_multi_snippet
+    : extracted.enable_multi_snippet;
 
   return config;
 }
@@ -581,4 +634,9 @@ function modifyWithInlineConfig(textLine, config) {
   }
 
   return result;
+}
+
+// Helper to check object
+function isEmpty(obj) {
+  return Object.keys(obj).length === 0;
 }
