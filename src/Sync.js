@@ -63,7 +63,7 @@ class Snippet {
         });
       }
       if (config.highlights !== undefined) {
-        textline = `${textline} {${config.highlights}}`;
+        textline = `${textline} ${config.highlights}`;
       }
       lines.push(modifyWithInlineConfig(textline, config));
     }
