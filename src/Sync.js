@@ -50,6 +50,18 @@ class Snippet {
     }
     if (config.enable_code_block) {
       let textline = fmtStartCodeBlock(this.ext);
+      if (config.override_codeblock_extension){
+        const override_extension = config.override_codeblock_extension
+        
+        override_extension.forEach(element => {
+          if (element.length !== 0 || element.length !== undefined ) {
+            const [oldExtension, replacementExtension] = element
+            if (this.ext = oldExtension) {
+              textline = fmtStartCodeBlock(replacementExtension);
+            }    
+          }
+        });
+      }
       if (config.highlights !== undefined) {
         textline = `${textline} {${config.highlights}}`;
       }
@@ -574,6 +586,11 @@ function overwriteConfig(current, extracted) {
   extracted?.enable_multi_snippet ?? true
     ? current.enable_multi_snippet
     : extracted.enable_multi_snippet;
+
+  config.override_codeblock_extension =
+  extracted?.override_codeblock_extension ?? true
+    ? current.override_codeblock_extension
+    : extracted.override_codeblock_extension;
 
   return config;
 }

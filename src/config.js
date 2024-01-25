@@ -40,5 +40,11 @@ module.exports.readConfig = (logger, file="") => {
     cfg['features']['enable_multi_snippet'] = false;
   }
 
+  // If allowed_target_extensions option isn't set, set it to an empty array
+  // which will ignore the option and include all files.
+  if (!Object.prototype.hasOwnProperty.call(cfg.features, 'override_codeblock_extension')) {
+    cfg['features']['override_codeblock_extension'] = [];
+  }
+
   return cfg;
 };
