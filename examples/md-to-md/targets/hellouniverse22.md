@@ -2,7 +2,7 @@
 
 Test markdown
 
-<!--SNIPSTART hellouniverse22 {"enable_code_block": false}-->
+<!--SNIPSTART hellouniverse22-->
 
 ```js
 function test() {
@@ -14,7 +14,7 @@ function test() {
 
 1. Test bullet point
 
-<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":2, "enable_code_block": false}-->
+<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":2}-->
 
   ```js
   function test() {
@@ -26,7 +26,7 @@ function test() {
 
 2. Test bullet point 2
 
-<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":3, "enable_code_block": false}-->
+<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":3}-->
 
    ```js
    function test() {
