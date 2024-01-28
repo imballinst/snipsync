@@ -12,6 +12,9 @@
     "dev": "node index.js",
     "lint": "eslint . --ext .js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@octokit/rest": "^18.12.0",
     "anzip": "^0.2.0",
