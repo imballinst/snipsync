@@ -8,7 +8,7 @@ module.exports.readConfig = (logger, file = "") => {
   const cfgPath = file === "" ? join(rootDir, cfgFile) : file;
   logger.info(`loading configuration from ${cfgPath}`);
   const cfg = load(readFileSync(cfgPath, "utf-8"));
-  console.info(cfg);
+
   // add features section if not specified
   if (!Object.prototype.hasOwnProperty.call(cfg, "features")) {
     cfg["features"] = {};

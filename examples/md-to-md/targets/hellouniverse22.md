@@ -26,12 +26,12 @@ function test() {
 
 2. Test bullet point 2
 
-<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":4, "enable_code_block": false}-->
+<!--SNIPSTART hellouniverse22 {"numberOfLeadingSpaces":3, "enable_code_block": false}-->
 
-    ```js
-    function test() {
-        alert("Hello, world!")
-    }
-    ```
+   ```js
+   function test() {
+       alert("Hello, world!")
+   }
+   ```
 
 <!--SNIPEND-->

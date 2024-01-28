@@ -7,7 +7,7 @@ targets:
 
 features:
   enable_source_link: false
-  enable_code_block: true
+  enable_code_block: false
   allowed_target_extensions: [.md, .mdx]
   enable_code_dedenting: true
   read_symbol_prefix: ""
