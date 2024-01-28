@@ -66,6 +66,7 @@ class Snippet {
     if (config.enable_code_block) {
       lines.push(modifyWithInlineConfig(markdownCodeTicks, config));
     }
+
     return lines;
   }
   // fmtSourceLink creates a markdown link to the source of the snippet
@@ -272,7 +273,9 @@ class Sync {
   // extractSnippets returns an array of code snippets that are found in the repositories
   async extractSnippets(repositories) {
     const snippets = [];
+    const readSymbolPrefix = this.config.features.read_symbol_prefix;
     this.progress.updateOperation("extracting snippets");
+
     await Promise.all(
       repositories.map(async ({ owner, repo, ref, filePaths }) => {
         this.progress.updateTotal(filePaths.length);
@@ -286,18 +289,34 @@ class Sync {
           let capture = false;
           let fileSnipsCount = 0;
           const fileSnips = [];
+
+          let effectiveReadStart = readStart;
+          let effectiveReadEnd = readEnd;
+
+          if (readSymbolPrefix !== undefined) {
+            effectiveReadStart = effectiveReadStart.replace(
+              "@@@",
+              readSymbolPrefix
+            );
+            effectiveReadEnd = effectiveReadEnd.replace(
+              "@@@",
+              readSymbolPrefix
+            );
+          }
+
           // @ts-ignore
           await eachLineAsync(itemPath, (line) => {
-            if (line.includes(readEnd)) {
+            if (line.includes(effectiveReadEnd)) {
               capture = false;
               fileSnipsCount++;
             }
             if (capture) {
               fileSnips[fileSnipsCount].lines.push(line);
             }
-            if (line.includes(readStart)) {
+
+            if (line.includes(effectiveReadStart)) {
               capture = true;
-              const id = extractReadID(line);
+              const id = extractReadID(line, effectiveReadStart);
               const snip = new Snippet(id, ext, owner, repo, ref, item);
               fileSnips.push(snip);
             }
@@ -307,6 +326,7 @@ class Sync {
         }
       })
     );
+
     return snippets;
   }
   // getTargetFilesInfos identifies the paths to the target write files
@@ -467,10 +487,6 @@ function escapeStringRegexp(string) {
   return string.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
 }
 
-const readMatchRegexp = new RegExp(
-  escapeStringRegexp(readStart) + /\s+(\S+)/.source
-);
-
 const writeMatchRegexp = new RegExp(
   escapeStringRegexp(writeStart) +
     /\s+(\S+)(?:\s+(.+))?\s*/.source +
@@ -478,7 +494,11 @@ const writeMatchRegexp = new RegExp(
 );
 
 // extractReadID uses regex to exract the id from a string
-function extractReadID(line) {
+function extractReadID(line, effectiveReadStart) {
+  const readMatchRegexp = new RegExp(
+    escapeStringRegexp(effectiveReadStart) + /\s+(\S+)/.source
+  );
+
   const matches = line.match(readMatchRegexp);
   return matches[1];
 }
@@ -535,6 +555,8 @@ function selectLines(config, lines, fileExtension) {
     yaml: "# ...",
     css: "/* ... */",
     html: "<!-- ...  -->",
+    md: "<!-- ...  -->",
+    mdx: "<!-- ...  -->",
     xml: "<!-- ...  -->",
     bash: "# ...",
   };
