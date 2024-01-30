@@ -415,6 +415,12 @@ class Sync {
         const extracted = extractWriteIDAndConfig(line);
         if (extracted.id === snippet.id) {
           config = overwriteConfig(this.config.features, extracted.config);
+          if (this.config.features.auto_indentation) {
+            const tabsCount = hasTab(line)
+            const leadingSpace = leadinfSpaceBeforeSnipstart(line)
+            config.numberOfLeadingTabs = tabsCount
+            config.numberOfLeadingSpaces = leadingSpace  
+          }
           // check snippet config
           if (!isEmpty(snippet.config)) {
             const snippetConfig = overwriteConfig(this.config.features, snippet.config);
@@ -578,6 +584,10 @@ function overwriteConfig(current, extracted) {
     config.numberOfLeadingSpaces = extracted.numberOfLeadingSpaces;
   }
 
+  if (extracted?.numberOfLeadingTabs) {
+    config.numberOfLeadingTabs = extracted.numberOfLeadingTabs;
+  }
+
   if (extracted?.ellipsisCommentReplacement !== undefined) {
     config.ellipsisCommentReplacement = extracted.ellipsisCommentReplacement;
   }
@@ -639,6 +649,17 @@ module.exports = { Sync };
 function modifyWithInlineConfig(textLine, config) {
   let result = textLine;
 
+  if (config?.numberOfLeadingTabs) {
+    const num = config?.numberOfLeadingTabs;
+    let tabs = "";
+
+    for (let i = 0; i < num; i++) {
+      tabs += "\t";
+    }
+
+    result = `${tabs}${result}`;
+  }
+
   if (config?.numberOfLeadingSpaces) {
     const num = config?.numberOfLeadingSpaces;
     let whitespaces = "";
@@ -656,4 +677,26 @@ function modifyWithInlineConfig(textLine, config) {
 // Helper to check object
 function isEmpty(obj) {
   return Object.keys(obj).length === 0;
+}
+
+// Helper to check object
+function hasTab(line) {
+  let tabsArray = line.match(/\t/g);
+  if (tabsArray) {
+    return tabsArray.length;
+  } else {
+    return 0;
+  }
+}
+
+// Helper to check object
+function leadinfSpaceBeforeSnipstart(line) {
+  let spacesBefore = line.match(new RegExp("\\s*(?=" + writeStart + ")", "g"));
+
+  // Check if spaces are found
+  if (spacesBefore) {
+    return spacesBefore[0].length;
+  } else {
+    return 0;
+  }
 }
