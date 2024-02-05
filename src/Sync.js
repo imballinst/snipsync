@@ -317,7 +317,12 @@ class Sync {
                   return Promise.resolve();
                 }
               }
-              fileSnips[fileSnipsCount].lines.push(line);
+              if (this.config.features.replace_tabs !== undefined) {
+                let replaced_line = line.replace(/\t/g, this.config.features.replace_tabs)
+                fileSnips[fileSnipsCount].lines.push(replaced_line);
+              } else {
+                fileSnips[fileSnipsCount].lines.push(line);
+              }
             }
             if (line.includes(readStart)) {
               capture = true;

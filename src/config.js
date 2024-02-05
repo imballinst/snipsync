@@ -52,5 +52,11 @@ module.exports.readConfig = (logger, file="") => {
     cfg['features']['enable_auto_indentation'] = false;
   }
 
+  // If replace_tabs option isn't set, set it to false
+  // which will ignore the option and include all files.
+  if (!Object.prototype.hasOwnProperty.call(cfg.features, 'replace_tabs')) {
+    cfg['features']['replace_tabs'] = undefined;
+  }
+
   return cfg;
 };
