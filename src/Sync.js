@@ -415,7 +415,7 @@ class Sync {
         const extracted = extractWriteIDAndConfig(line);
         if (extracted.id === snippet.id) {
           config = overwriteConfig(this.config.features, extracted.config);
-          if (this.config.features.auto_indentation) {
+          if (this.config.features.enable_auto_indentation) {
             const tabsCount = hasTab(line)
             const leadingSpace = leadinfSpaceBeforeSnipstart(line)
             config.numberOfLeadingTabs = tabsCount

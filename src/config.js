@@ -46,10 +46,10 @@ module.exports.readConfig = (logger, file="") => {
     cfg['features']['override_codeblock_extension'] = [];
   }
 
-  // If auto_indentation option isn't set, set it to false
+  // If enable_auto_indentation option isn't set, set it to false
   // which will ignore the option and include all files.
-  if (!Object.prototype.hasOwnProperty.call(cfg.features, 'auto_indentation')) {
-    cfg['features']['auto_indentation'] = false;
+  if (!Object.prototype.hasOwnProperty.call(cfg.features, 'enable_auto_indentation')) {
+    cfg['features']['enable_auto_indentation'] = false;
   }
 
   return cfg;
