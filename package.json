@@ -1,5 +1,5 @@
 {
-  "name": "@kmsi/snipsync",
+  "name": "@imballinstack/snipsync",
   "version": "1.12.3",
   "description": "Sync docs with github repo code snippets",
   "main": "index.js",
