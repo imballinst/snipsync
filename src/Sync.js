@@ -69,9 +69,16 @@ class Snippet {
     }
     if (config.select !== undefined) {
       const selectedLines = selectLines(config, this.lines);
-      lines.push(
-        ...selectedLines.map((line) => modifyWithInlineConfig(line, config))
-      );
+      if (config.insert !== undefined) {
+        const insertLine = insertLines(config, selectedLines);
+        lines.push(
+          ...insertLine.map((line) => modifyWithInlineConfig(line, config))
+        );
+      } else {
+        lines.push(
+          ...selectedLines.map((line) => modifyWithInlineConfig(line, config))
+        );
+      }
     } else {
       lines.push(
         ...this.lines.map((line) => modifyWithInlineConfig(line, config))
@@ -318,7 +325,7 @@ class Sync {
                 }
               }
               if (this.config.features.replace_tabs !== undefined) {
-                let replaced_line = line.replace(/\t/g, this.config.features.replace_tabs)
+                const replaced_line = line.replace(/\t/g, this.config.features.replace_tabs)
                 fileSnips[fileSnipsCount].lines.push(replaced_line);
               } else {
                 fileSnips[fileSnipsCount].lines.push(line);
@@ -396,6 +403,7 @@ class Sync {
   async spliceSnippets(snippets, files) {
     this.progress.updateOperation("splicing snippets with targets");
     this.progress.updateTotal(snippets.length);
+    // this.logger.info(snippets); // delete
     for (const snippet of snippets) {
       for (let file of files) {
         file = await this.getSplicedFile(snippet, file);
@@ -597,6 +605,10 @@ function overwriteConfig(current, extracted) {
     config.ellipsisCommentReplacement = extracted.ellipsisCommentReplacement;
   }
 
+  if (extracted?.insertLine) {
+    config.insert = extracted.insertLine;
+  }
+
   config.enable_multi_snippet =
   extracted?.enable_multi_snippet ?? true
     ? current.enable_multi_snippet
@@ -704,4 +716,15 @@ function leadinfSpaceBeforeSnipstart(line) {
   } else {
     return 0;
   }
+}
+
+function insertLines(config, lines) {
+  const { insert: insertLines } = config;
+  let newLines = [];
+
+  for (const il of insertLines) {
+    lines.splice(parseInt(il[0]), 0, il[1])
+  }
+  newLines.push(...lines);
+  return newLines;
 }
