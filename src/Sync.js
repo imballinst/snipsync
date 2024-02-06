@@ -498,9 +498,9 @@ function extractReadID(line, effectiveReadStart) {
   const readMatchRegexp = new RegExp(
     escapeStringRegexp(effectiveReadStart) + /\s+(\S+)/.source
   );
-
-  const matches = line.match(readMatchRegexp);
-  return matches[1];
+  
+  let [, id] = line.match(readMatchRegexp);
+  return id.endsWith('-->') ? id.slice(0, -3) : id;
 }
 
 // extractWriteIDAndConfig uses regex to exract the id from a string

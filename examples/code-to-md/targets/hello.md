@@ -19,9 +19,9 @@ console.log("xdd");
 2. Test bullet point 2
 
 <!--SNIPSTART hellouniverse {"numberOfLeadingSpaces":3}-->
-    ```js
-    console.log("xdd");
-    ```
+   ```js
+   console.log("xdd");
+   ```
 <!--SNIPEND-->
 
 ## Test selective numbers
